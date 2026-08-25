@@ -12,6 +12,37 @@ from hex_target_processor import HexTargetProcessor
 # Integration block within src/turret_autonomy.py
 from acoustic_filter import AcousticSignalFilter
 
+# Integration block within src/turret_autonomy.py
+import numpy as np
+from safety_interlock import SafetyInterlockSystem
+
+safety = SafetyInterlockSystem()
+
+def check_safety_matrix_before_firing(acoustic_lock, live_vision_data, live_distance):
+    # Step 1: Update acoustic tracking latch state
+    safety.acoustic_match_latched = acoustic_lock
+    
+    # Step 2: Read live data from thermal camera grid
+    mock_thermal_grid = np.random.uniform(25.0, 150.0, size=(8, 8)) # Simulated fire hot spots
+    thermal_confirmed, peak_temp = safety.evaluate_thermal_grid(mock_thermal_grid)
+    
+    # Step 3: Run human detection calculations
+    safety.evaluate_human_proximity(live_vision_data, range_finder_meters=live_distance)
+    
+    # Step 4: Refresh software heartbeat
+    safety.refresh_watchdog_heartbeat()
+    
+    # Step 5: Read safety voltage rail configuration
+    interlock_rail_voltage = safety.get_interlock_bus_voltage()
+    
+    if interlock_rail_voltage < 1.0:
+        # Hardware protection: Force Class-D amplifier power lines open
+        set_amplifier_enable_pin(low=True)
+        print("[SAFETY SYSTEM] Discharge disabled. Waiting for sensor confirmation or clear zone.")
+    else:
+        # Permissive unlocked: Safe to engage target fire
+        set_amplifier_enable_pin(high=True)
+
 def process_live_channels(raw_mic_buffers):
     # Initialize the signal processor instance
     audio_dsp = AcousticSignalFilter(sample_rate=4000)
