@@ -9,6 +9,26 @@ import time
 import random  # Simulated hardware hardware capture registers
 from hex_target_processor import HexTargetProcessor
 
+# Integration block within src/turret_autonomy.py
+from acoustic_filter import AcousticSignalFilter
+
+def process_live_channels(raw_mic_buffers):
+    # Initialize the signal processor instance
+    audio_dsp = AcousticSignalFilter(sample_rate=4000)
+    
+    cleaned_channels = []
+    
+    for channel_data in raw_mic_buffers:
+        # Step 1: Strip out ambient high-frequency voice/sirens (30-60 Hz isolation)
+        bandpassed = audio_dsp.apply_bandpass_filter(channel_data)
+        
+        # Step 2: Extract persistent in-band humming via spectral profiling
+        cleaned_audio = audio_dsp.apply_spectral_subtraction(bandpassed)
+        cleaned_channels.append(cleaned_audio)
+        
+    # Extracted data arrays pass down directly to the TDoA coordinate engine
+    return cleaned_channels
+
 class AutomatedFireSuppressorTurret:
     def __init__(self):
         self.processor = HexTargetProcessor(mic_spacing_mm=150.0)
