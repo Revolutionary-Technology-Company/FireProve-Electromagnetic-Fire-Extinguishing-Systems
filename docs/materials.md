@@ -40,6 +40,3 @@ While titanium won't melt in typical fire thresholds, the driver's permanent mag
 * Barrel Dissipation: The 4.8-inch titanium rifled barrel acts as a colossal heatsink. Because titanium has lower thermal conductivity than steel, it slows the inward crawl of heat toward the driver base, keeping the voice coil gap stable during continuous frequency generation.
 * 
 
-Would you like to detail the stamping press geometry for the corrugated compliance ring, or calculate the maximum displacement (Xmax) the titanium foil can handle before suffering fatigue stress?
-
-
