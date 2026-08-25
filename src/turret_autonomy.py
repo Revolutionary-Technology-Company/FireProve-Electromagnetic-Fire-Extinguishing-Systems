@@ -16,6 +16,28 @@ from acoustic_filter import AcousticSignalFilter
 import numpy as np
 from safety_interlock import SafetyInterlockSystem
 
+# Execution loop block inside src/turret_autonomy.py
+from wave_inversion_engine import WaveInversionEngine
+
+inversion_engine = WaveInversionEngine(sample_rate=4000, buffer_size=512)
+
+def process_and_suppress(cleaned_microphone_buffer, safety_permissive):
+    # Step 1: Track down the exact peak flame frequency (30-60 Hz)
+    freq, amp = inversion_engine.detect_combustion_frequency(cleaned_microphone_buffer)
+    
+    if freq > 0 and safety_permissive:
+        # Step 2: Generate the 180-degree phase-flipped waveform
+        anti_wave = inversion_engine.synthesize_anti_wave(freq, amp)
+        
+        # Step 3: Shift the waveform onto the 0.0V - 1.0V hardware bus
+        bus_voltages = inversion_engine.map_to_hex_bus_voltages(anti_wave)
+        
+        # Step 4: Stream the data arrays to the Class-D GaN power stage
+        stream_to_amplifier_bus(bus_voltages)
+    else:
+        # Hard clamp to a stable 0.5V reference neutral line if disarmed
+        stream_to_amplifier_bus([0.5] * 512)
+
 safety = SafetyInterlockSystem()
 
 def check_safety_matrix_before_firing(acoustic_lock, live_vision_data, live_distance):
