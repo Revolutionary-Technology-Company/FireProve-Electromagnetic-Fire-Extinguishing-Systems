@@ -13,6 +13,25 @@ from radio_mesh import TurretMeshNode
 from acoustic_filter import AcousticSignalFilter
 from safety_interlock import SafetyInterlockSystem
 from wave_inversion_engine import WaveInversionEngine
+# Integration step snippet within src/turret_autonomy.py
+from drone_mission_safety import MissionLockedFlightController
+
+mission_safety = MissionLockedFlightController()
+
+def evaluating_flight_loop_ticks(live_drone_instance, current_fire_heat, home_pad_thermal_sensor):
+    # Intercepts standard flight system calls before any return procedures can fire
+    action_directive = mission_safety.handle_return_to_home_request(
+        active_heat_intensity = current_fire_heat,
+        home_pad_temp = home_pad_thermal_sensor,
+        flight_control_instance = live_drone_instance
+    )
+    
+    if action_directive == "CONTINUE_SUPPRESSION_MISSION":
+        # Force the 54.8" titanium wave cannon to stay active on target coordinates
+        engage_acoustic_discharge_sequence(true)
+    elif action_directive == "HOLD_ORBITAL_STATION":
+        # Keep fighting current flames while maintaining a safe airborne holding orbit
+        maintain_defensive_holding_pattern()
 
 # 1. Global Modular Initializations
 node = TurretMeshNode(turret_id="Alpha_Unit")
