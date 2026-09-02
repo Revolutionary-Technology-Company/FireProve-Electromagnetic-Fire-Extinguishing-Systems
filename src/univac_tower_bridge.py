@@ -6,6 +6,32 @@ Translates mainframe commands to flight strings via Numba-accelerated loops.
 
 from numba import njit
 
+# Added processing pass inside src/univac_tower_bridge.py
+from edwards_fireworks_reporter import EdwardsFireworksReporter
+
+# Instantiate the workstation link
+fireworks_bus = EdwardsFireworksReporter()
+
+def main_tower_telemetry_tick(live_drone_registry):
+    """
+    Called on every radio tower cycle to sweep the active fleet 
+    and push real-time updates directly to Edwards FireWorks.
+    """
+    for drone_id, data in live_drone_registry.items():
+        # Step A: Push state variables to the Edwards platform file watcher
+        success = fireworks_bus.transmit_event_to_fireworks(
+            drone_id = drone_id,
+            lat = data['current_lat'],
+            lon = data['current_lon'],
+            heat_intensity = data['heat_profile'],
+            cannon_firing = data['is_suppressing'],
+            human_lockout = data['safety_tripped']
+        )
+        
+        if success:
+            # Let the operators track operations on the central workstation maps
+            print(f"[Tower] Logged active telemetric state for {drone_id} to Edwards Client.")
+
 @njit(fastmath=True, parallel=False)
 def process_mainframe_telemetry_matrix(raw_bitstream):
     """
