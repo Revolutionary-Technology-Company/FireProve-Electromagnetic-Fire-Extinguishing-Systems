@@ -8,6 +8,10 @@ and manages automated acoustic fire suppression firing cycles.
 import time
 import random  # Simulated hardware hardware capture registers
 from hex_target_processor import HexTargetProcessor
+from radio_mesh import TurretMeshNode  # <--- Imported here
+
+# Initialize this specific hardware node with a unique ID
+node = TurretMeshNode(turret_id="Alpha_Unit")  # <--- Initialized here
 
 # Integration block within src/turret_autonomy.py
 from acoustic_filter import AcousticSignalFilter
